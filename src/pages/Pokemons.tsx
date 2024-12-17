@@ -6,17 +6,20 @@ import PokemonCard from "../components/PokemonCard";
 import ErrorScreen from "../components/ErrorScreen";
 
 const Pokemons = () => {
-    const { data: pokemons, error: pokemonsError, isLoading: pokemonsIsLoading } = useSWR("pokemons", getAllPokemons);
+    const { data: pokemons, error: pokemonsError, isValidating: pokemonsIsValidating } = useSWR("pokemons", getAllPokemons);
 
     // Sayfalama için state
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState<number>(() => {
+        const savedPage = localStorage.getItem("lastPage");
+        return savedPage ? parseInt(savedPage, 10) : 1;
+    });
     const itemsPerPage = 9; // Her sayfada gösterilecek Pokémon sayısı
 
     // Arama için state
-    const [searchQuery, setSearchQuery] = useState("");
+    const [searchQuery, setSearchQuery] = useState<string>("");
 
     // Yükleniyor ve hata ekranları
-    if (pokemonsIsLoading) return <LoadingScreen />;
+    if (pokemonsIsValidating && !pokemons) return <LoadingScreen />;
     if (pokemonsError) return <ErrorScreen />;
 
     // Arama yaparken searchQuery göre filtreleme
@@ -32,18 +35,45 @@ const Pokemons = () => {
     // Toplam sayfa sayısını hesaplama
     const totalPages = Math.ceil(filteredPokemons.length / itemsPerPage);
 
-    // Önceki sayfa butonu
-    const goToPreviousPage = () => {
-        if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-    };
+    // Sayfa butonlarını oluşturma
+    const generatePageButtons = () => {
+        const buttons = [];
+        const delta = 1; // Mevcut sayfanın önceki ve sonraki 3 sayfa
 
-    // Sonraki sayfa butonu
-    const goToNextPage = () => {
-        if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+        for (let i = 1; i <= totalPages; i++) {
+            if (
+                i === 1 || // İlk sayfa
+                i === totalPages || // Son sayfa
+                (i >= currentPage - delta && i <= currentPage + delta) // Mevcut sayfanın çevresi
+            ) {
+                buttons.push(
+                    <button
+                        key={i}
+                        onClick={() => {
+                            setCurrentPage(i);
+                            localStorage.setItem("lastPage", i.toString());
+                        }}
+                        className={`px-4 py-2 rounded font-medium text-xs lg:text-base ${i === currentPage
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-200 text-zinc-800 hover:bg-gray-300"
+                            }`}
+                    >
+                        {i}
+                    </button>
+                );
+            } else if (
+                (i === currentPage - delta - 1 || i === currentPage + delta + 1) &&
+                !(buttons[buttons.length - 1]?.type === "span" && buttons[buttons.length - 1]?.props.children === "...")
+            ) {
+                buttons.push(<span key={`dots-${i}`}>...</span>);
+            }
+        }
+
+        return buttons;
     };
 
     return (
-        <div className="py-36 px-5">
+        <div className="py-48 lg:py-32 px-5">
             <div className="mb-5 flex justify-center">
                 <input
                     type="text"
@@ -67,24 +97,8 @@ const Pokemons = () => {
                 ))}
             </div>
 
-            <div className="flex justify-between items-center mt-5">
-                <button
-                    onClick={goToPreviousPage}
-                    disabled={currentPage === 1}
-                    className={`px-4 py-2 rounded font-medium ${currentPage === 1 ? "bg-gray-300 opacity-25" : "bg-blue-500 text-white"}`}>
-                    Geri
-                </button>
-
-                <span className="text-zinc-800 font-medium">
-                    {currentPage} / {totalPages}
-                </span>
-
-                <button
-                    onClick={goToNextPage}
-                    disabled={currentPage === totalPages}
-                    className={`px-4 py-2 rounded font-medium ${currentPage === totalPages ? "bg-gray-300 opacity-25" : "bg-blue-500 text-white"}`}>
-                    İleri
-                </button>
+            <div className="flex justify-center items-center mt-5 gap-2">
+                {generatePageButtons()}
             </div>
         </div>
     );

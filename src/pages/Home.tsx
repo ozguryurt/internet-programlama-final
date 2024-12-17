@@ -2,7 +2,7 @@ import { Link } from "react-router"
 
 const Home = () => {
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-5 py-36 px-5">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 gap-5 py-48 lg:py-32 px-5">
       <div className="flex justify-center items-center">
         <img src="/pikachu.png" alt="Pikachu" className="w-8/12 h-auto" />
       </div>
