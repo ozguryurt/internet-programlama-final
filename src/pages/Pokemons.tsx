@@ -57,7 +57,7 @@ const Pokemons = () => {
     // Sayfa butonlarını oluşturma
     const generatePageButtons = () => {
         const buttons = [];
-        const delta = 1; // Mevcut sayfanın önceki ve sonraki 3 sayfa
+        const delta = 1; // Mevcut sayfanın önceki ve sonraki 1 sayfa
 
         for (let i = 1; i <= totalPages; i++) {
             if (
