@@ -1,19 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { getAllPokemons } from "../utils/getAllPokemons";
 import LoadingScreen from "../components/LoadingScreen";
 import PokemonCard from "../components/PokemonCard";
 import ErrorScreen from "../components/ErrorScreen";
+import { useLocation, useNavigationType } from "react-router";
 
 const Pokemons = () => {
     const { data: pokemons, error: pokemonsError, isValidating: pokemonsIsValidating } = useSWR("pokemons", getAllPokemons);
 
+    const location = useLocation();
+    const navigationType = useNavigationType();
+
     // Sayfalama için state
-    const [currentPage, setCurrentPage] = useState<number>(() => {
-        const savedPage = localStorage.getItem("lastPage");
-        return savedPage ? parseInt(savedPage, 10) : 1;
-    });
+    const [currentPage, setCurrentPage] = useState<number>(1);
     const itemsPerPage = 9; // Her sayfada gösterilecek Pokémon sayısı
+
+    useEffect(() => {
+        // Tarayıcı geri düğmesiyle dönüldüğünde çalışır
+        if (navigationType === "POP" && location.pathname === "/pokemonlar") {
+            const savedPage = localStorage.getItem("lastPage");
+            if (savedPage) {
+                setCurrentPage(parseInt(savedPage, 10));
+            }
+        } else {
+            // İlk kez girildiğinde veya başka yerden gelindiyse 1. sayfaya ayarla
+            setCurrentPage(1);
+        }
+    }, [location, navigationType]);
+
+    useEffect(() => {
+        // Sayfa numarasını localStorage'a kaydet
+        localStorage.setItem("lastPage", currentPage.toString());
+    }, [currentPage]);
 
     // Arama için state
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -54,8 +73,8 @@ const Pokemons = () => {
                             localStorage.setItem("lastPage", i.toString());
                         }}
                         className={`px-4 py-2 rounded font-medium text-xs lg:text-base ${i === currentPage
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-200 text-zinc-800 hover:bg-gray-300"
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 text-zinc-800 hover:bg-gray-300"
                             }`}
                     >
                         {i}
